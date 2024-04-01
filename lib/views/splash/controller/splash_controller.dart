@@ -1,5 +1,6 @@
 import 'package:app/routes/app_routes.dart';
 import 'package:app/services/notification_service.dart';
+import 'package:app/views/api/api_screen.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,9 @@ class SplashController extends GetxController {
   void onInit() {
     service.listenNotification();
     Future.delayed(const Duration(seconds: 3), () {
-      checkUser();
+      // checkUser();
+      Get.to(  ()=> ApiScreen());
+      ;
     });
     super.onInit();
   }

@@ -11,6 +11,10 @@ import 'package:app/views/call/call_screen.dart';
 import 'package:app/views/chat_room/binding/search_binding.dart';
 import 'package:app/views/chat_room/chat_room_sreen.dart';
 import 'package:app/views/group/binding/group_binding.dart';
+import 'package:app/views/group/create_group_screen.dart/binding/create_new_group_binding.dart';
+import 'package:app/views/group/create_group_screen.dart/create_new_group_screen.dart';
+import 'package:app/views/group/get_group_detail_screen/binding/get_group_detail_binding.dart';
+import 'package:app/views/group/get_group_detail_screen/get_froup_scree.dart';
 import 'package:app/views/group/grops_screen.dart';
 import 'package:app/views/home/binding/home_binding.dart';
 import 'package:app/views/home/home_screen.dart';
@@ -34,12 +38,19 @@ class AppRoutes {
   static const String statusScreen = '/status_screen';
   static const String searchScreen = '/search_screen';
   static const String chatroom = '/chatroom_screen';
+  static const String createNewGroup = '/create_new_group';
+  static const String getGroupDetailScreen = '/get_group_detail_screen';
 
   static getPages() => [
         GetPage(
           name: splash,
           page: () => SplashScreen(),
           binding: SplashBinding(),
+        ),
+        GetPage(
+          name: createNewGroup,
+          page: () => CreateNewGroup(),
+          binding: CreateNewGroupBindig(),
         ),
         GetPage(
           name: chatroom,
@@ -90,6 +101,11 @@ class AppRoutes {
           name: statusScreen,
           page: () => StatusScreen(),
           binding: StatusBinding(),
+        ),
+        GetPage(
+          name: getGroupDetailScreen,
+          page: () => GetGroupDetailScreen(),
+          binding: GetGroupDetailBinding(),
         ),
       ];
 }

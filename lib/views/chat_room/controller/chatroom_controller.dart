@@ -16,11 +16,13 @@ import 'package:uuid/uuid.dart';
 
 class ChatroomController extends GetxController {
   final msgCtrl = TextEditingController();
-  User? user = FirebaseAuth.instance.currentUser;
-  var uuid = Uuid();
+  final User? user = FirebaseAuth.instance.currentUser;
+  var uuid = const Uuid();
   File? imageFile;
-  Rx<String> imageUrl = ''.obs;
+  final Rx<String> imageUrl = ''.obs;
   final NotificationService notificationService = NotificationService();
+  var isLoading = false.obs;
+  Rx<File?> file = Rx<File?>(null);
 
   String getChatRoom(String targetUser) {
     var currentUser = user!.uid;
@@ -41,6 +43,11 @@ class ChatroomController extends GetxController {
     String cUser = currentUser.uid!;
     String tUser = targetUser.uid!;
     return cUser.compareTo(tUser) > 0 ? currentUser : targetUser;
+  }
+
+  void clearImage() {
+    imageFile = null;
+    update();
   }
 
   Future<void> sendMessage(String targetUser, UserModel recieverDetail) async {
@@ -79,34 +86,32 @@ class ChatroomController extends GetxController {
       chatRoomId: roomId,
     );
 
-    print("Sender: ${sender.email}");
-    print("Reciever: ${reciever.email}");
     try {
-      var data = await firebaseFirestore
+      await firebaseFirestore
           .collection('chatrooms')
           .doc(roomId)
           .collection('messages')
           .doc(chatId)
           .set(messageDetails.toJson())
           .then((value) async {
+        imageFile = null;
         await firebaseFirestore
             .collection('chatrooms')
             .doc(roomId)
             .set(chatroomModel.toJson())
             .then((value) {
+          saveChatUser(recieverDetail);
           notificationService.pushNotificationFromFirebase(
             sendBy: recieverDetail.name ?? 'User',
             deviceToken: recieverDetail.idToken ?? '',
             msg: msgCtrl.text,
           );
           msgCtrl.clear();
-          imageFile = null;
         });
       });
       update();
-      print('.....................function work');
     } catch (e) {
-      print('.......................Error:..$e');
+      print('Error: $e');
     }
   }
 
@@ -130,6 +135,20 @@ class ChatroomController extends GetxController {
         );
   }
 
+  Future<void> saveChatUser(UserModel targetUser) async {
+    final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+    try {
+      await firebaseFirestore
+          .collection('users')
+          .doc(user!.uid)
+          .collection('myChatUsers')
+          .doc(targetUser.uid)
+          .set(targetUser.toMap());
+    } catch (e) {
+      print('$e');
+    }
+  }
+
   Future<void> pickImageFromGallery() async {
     var selectImage =
         await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -137,6 +156,7 @@ class ChatroomController extends GetxController {
       imageFile = File(selectImage.path);
       croppedImage(File(imageFile!.path));
       imageUploadInFirebase(imageFile!);
+      file.value = imageFile;
       update();
     }
   }
@@ -152,6 +172,7 @@ class ChatroomController extends GetxController {
     final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
 
     try {
+      isLoading.value = true;
       TaskSnapshot snapshot =
           await firebaseStorage.ref().child('chatImage').putFile(
                 File(image.path),
@@ -163,8 +184,10 @@ class ChatroomController extends GetxController {
         imageUrl.value = url;
       }
       update();
+      isLoading.value = false;
     } catch (e) {
-      print('.....................$e');
+      isLoading.value = false;
+      print('$e');
     }
   }
 }

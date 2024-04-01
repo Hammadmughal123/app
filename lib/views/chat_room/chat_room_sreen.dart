@@ -18,7 +18,9 @@ class ChatRoomScree extends StatelessWidget {
 
   final ChatroomController chatroomController =
       Get.put<ChatroomController>(ChatroomController());
+
   var userOnline;
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ChatroomController>(
@@ -40,7 +42,8 @@ class ChatRoomScree extends StatelessWidget {
                       child: CupertinoActivityIndicator(),
                     );
                   },
-                  imageUrl: userModel!.image ?? '',
+                  imageUrl:
+                      userModel?.image ?? '', // Use ?. to handle null userModel
                 ),
               ),
             ),
@@ -49,17 +52,17 @@ class ChatRoomScree extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userModel!.name ?? 'User',
+                  userModel?.name ?? 'User', // Use ?. to handle null userModel
                   style: const TextStyle(color: Colors.white),
                 ),
                 StreamBuilder(
                   stream: FirebaseFirestore.instance
                       .collection('users')
-                      .doc(FirebaseAuth.instance.currentUser!.uid)
+                      .doc(FirebaseAuth.instance.currentUser?.uid)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return SizedBox();
+                      return const SizedBox();
                     }
                     if (snapshot.hasError ||
                         !snapshot.hasData ||
@@ -69,7 +72,7 @@ class ChatRoomScree extends StatelessWidget {
 
                     var model = UserModel.fromMap(
                         snapshot.data!.data() as Map<String, dynamic>);
-                    userOnline = model;
+                    userOnline = model.status;
 
                     return Text(
                       model.status ?? '',
@@ -85,118 +88,80 @@ class ChatRoomScree extends StatelessWidget {
               Expanded(
                 child: Stack(
                   children: [
-                    StreamBuilder(
-                      stream:
-                          chatroomController.getAllMessages(userModel!.uid!),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CupertinoActivityIndicator(),
-                          );
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(
-                            child: Text('Start Chat'),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          print('Error: ${snapshot.error}');
-                        }
-                        return ListView.builder(
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            var data = snapshot.data![index];
-                            final bool isCurrentUserMessage =
-                                data.senderId == chatroomController.user!.uid;
-                            return Align(
-                              alignment: isCurrentUserMessage
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: isCurrentUserMessage
-                                      ? Colors.blue
-                                      : Colors.green,
-                                ),
-                                margin: const EdgeInsets.all(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        data.message!,
-                                        style: const TextStyle(
-                                            fontSize: 16, color: Colors.white),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            data.time!,
-                                            style: const TextStyle(
-                                                color: Colors.white),
-                                          ),
-                                          Text(
-                                            userOnline == 'Online'
-                                                ? 'Seen'
-                                                : 'Delivered',
-                                            style: const TextStyle(
-                                                color: Colors.white),
-                                          )
-                                        ],
-                                      ),
-                                      data.imageUrl == ''
-                                          ?SizedBox.shrink(): CachedNetworkImage(
-                                            height: 200,
-                                            width: Get.width/2,
-                                              imageUrl: data.imageUrl ?? '',
-                                              placeholder: (context, url) =>
-                                                  const Center(
-                                                child:
-                                                    CupertinoActivityIndicator(
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      const Center(
-                                                child: Icon(Icons.error),
-                                              ),
-                                            )
-                                         
-                                    ],
-                                    // ctrl.imageUrl.value !=null?
-                                  ),
-                                ),
-                              ),
+                    Stack(
+                      children: [
+                        StreamBuilder(
+                          stream: chatroomController.getAllMessages(
+                              userModel?.uid ??
+                                  ''), // Use ?. to handle null userModel
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CupertinoActivityIndicator(),
+                              );
+                            }
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Center(
+                                child: Text('Start Chat'),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              print(
+                                  '.......................Error: ${snapshot.error}');
+                            }
+                            return ListView.builder(
+                              reverse: true,
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, index) {
+                                var data = snapshot.data![index];
+                                final bool isCurrentUserMessage =
+                                    data.senderId ==
+                                        chatroomController.user
+                                            ?.uid; // Use ?. to handle null user
+                                return Column(
+                                  children: [
+                                    buildMessageWidget(
+                                      data,
+                                      isCurrentUserMessage,
+                                      userOnline ?? '',
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    ),
-                    ctrl.imageFile != null
-                        ? Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
+                        ),
+                        ctrl.imageFile != null
+                            ? Positioned(
+                                bottom: -2,
+                                left: 0,
+                                right: 0,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
                                   children: [
                                     Padding(
-                                      padding:
-                                          const EdgeInsets.only(right: 28.0),
+                                      padding: const EdgeInsets.only(
+                                          right: 18.0, left: 18),
+                                      child: SizedBox(
+                                        height: 400,
+                                        width: Get.width,
+                                        child: Image.file(
+                                          File(ctrl.imageFile!.path),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      top: -15,
                                       child: GestureDetector(
                                         onTap: () {
-                                         
+                                          ctrl.clearImage();
                                         },
                                         child: Container(
+                                          height: 30,
+                                          width: 30,
                                           decoration: const BoxDecoration(
                                             shape: BoxShape.circle,
                                             color: Colors.red,
@@ -212,18 +177,10 @@ class ChatRoomScree extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                Container(
-                                  height: Get.height / 2,
-                                  width: Get.width,
-                                  child: Image.file(
-                                    File(ctrl.imageFile!.path),
-                                    //fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : const SizedBox.shrink()
+                              )
+                            : const SizedBox.shrink(),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -234,22 +191,29 @@ class ChatRoomScree extends StatelessWidget {
                       controller: chatroomController.msgCtrl,
                       decoration: InputDecoration(
                         suffixIcon: GestureDetector(
-                            onTap: () {
-                              ctrl.pickImageFromGallery();
-                            },
-                            child: Icon(Icons.browse_gallery)),
+                          onTap: () {
+                            ctrl.pickImageFromGallery();
+                          },
+                          child: const Icon(Icons.browse_gallery),
+                        ),
                         hintText: 'Send message....',
-                        contentPadding: EdgeInsets.only(left: 20),
+                        contentPadding: const EdgeInsets.only(left: 20),
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      chatroomController.sendMessage(
-                          userModel!.uid!, userModel!);
-                    },
-                    icon: const Icon(Icons.send),
-                  )
+                  Obx(() => ctrl.isLoading.value
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : IconButton(
+                          onPressed: () {
+                            chatroomController.sendMessage(
+                              userModel?.uid ?? '',
+                              userModel!,
+                            ); // Use ?. to handle null userModel
+                          },
+                          icon: const Icon(Icons.send),
+                        ))
                 ],
               )
             ],
@@ -258,58 +222,73 @@ class ChatRoomScree extends StatelessWidget {
       },
     );
   }
-  Widget buildMessageWidget(MessageModel data, bool isCurrentUserMessage, String userOnline) {
-  return Align(
-    alignment: isCurrentUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: isCurrentUserMessage ? Colors.blue : Colors.green,
-      ),
-      margin: const EdgeInsets.all(8),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
+
+  Widget buildMessageWidget(
+      MessageModel data, bool isCurrentUserMessage, String userOnline) {
+    return Align(
+      alignment:
+          isCurrentUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: isCurrentUserMessage ? Colors.blue : Colors.green,
+        ),
+        margin: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              data.message!,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  data.time!,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                Text(
-                  userOnline == 'Online' ? 'Seen' : 'Delivered',
-                  style: const TextStyle(color: Colors.white),
-                )
-              ],
-            ),
-            data.imageUrl == ''
-                ? SizedBox.shrink()
-                : CachedNetworkImage(
-                    height: 200,
-                    width: Get.width / 2,
-                    imageUrl: data.imageUrl ?? '',
-                    placeholder: (context, url) => const Center(
-                      child: CupertinoActivityIndicator(
-                        color: Colors.black,
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Center(
-                      child: Icon(Icons.error),
-                    ),
+            if (data.type == 'text' && data.message != null)
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
+                  color: isCurrentUserMessage ? Colors.blue : Colors.green,
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Text(
+                  data.message!,
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ),
+            if (data.type == 'text' && data.time != null)
+              Container(
+                padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      data.time!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      userOnline == 'Online' ? 'Seen' : 'Delivered',
+                      style: const TextStyle(color: Colors.white),
+                    )
+                  ],
+                  // "973da56abfdfd75ea977d742f8adeb12      =36532730";
+                ),
+              ),
+            if (data.type == 'image' && data.imageUrl != null)
+              Container(
+                height: 200,
+                width: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: CachedNetworkImage(
+                  fit: BoxFit.cover,
+                  imageUrl: data.imageUrl!,
+                  placeholder: (context, url) => const Center(
+                    child: CupertinoActivityIndicator(),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }

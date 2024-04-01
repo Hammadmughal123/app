@@ -1,10 +1,11 @@
+import 'package:app/resources/my_sized_box.dart';
 import 'package:app/views/auth/signup/controller/signup_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
-  final SignupCotroller signupCotroller = Get.find<SignupCotroller>();
+  final SignupCotroller signupCotroller = Get.put<SignupCotroller>(SignupCotroller());
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,11 +24,13 @@ class SignupScreen extends StatelessWidget {
             TextFormField(
               controller: signupCotroller.passCtrl,
             ),
-            ElevatedButton(
-              onPressed: () {
-                signupCotroller.createUserFromEmailAndPassword();
-              },
-              child: Text('Signup'),
+            20.h,
+            AbsorbPointer(
+              child: GestureDetector(
+                  onTap: () {
+                    signupCotroller.signupUser();
+                  },
+                  child: const Text('Signup')),
             )
           ],
         ),

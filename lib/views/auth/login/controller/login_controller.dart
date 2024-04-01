@@ -6,19 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginController extends GetxController {
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController pasCtrl = TextEditingController();
   final GoogleSignIn signIn = GoogleSignIn();
+  var isLoading = false.obs;
 
   Future<void> googlSignInUser() async {
     try {
+      isLoading.value = true;
       final GoogleSignInAccount? googleSignInAccount = await signIn.signIn();
       if (googleSignInAccount != null) {
         EasyLoading.show();
+
         final GoogleSignInAuthentication googleSignInAuthentication =
             await googleSignInAccount.authentication;
         final AuthCredential authCredential = GoogleAuthProvider.credential(
@@ -31,9 +33,7 @@ class LoginController extends GetxController {
         if (user != null) {
           final SharedPreferences prefs = await SharedPreferences.getInstance();
           final String? token = prefs.getString('token');
-         
-          DateTime time = DateTime.now();
-          String formatTime = DateFormat.jm().format(time);
+
           UserModel userModel = UserModel(
               name: user.displayName,
               email: user.email,
@@ -46,20 +46,27 @@ class LoginController extends GetxController {
               .doc(user.uid)
               .set(userModel.toMap())
               .then((value) {
+            isLoading.value = false;
             EasyLoading.showSuccess('You are Successfully Login');
             EasyLoading.dismiss();
             Get.toNamed(AppRoutes.bottom);
           });
         }
+      } else {
+        isLoading.value = false;
       }
     } on FirebaseException catch (ex) {
+      isLoading.value = false;
+
       EasyLoading.showError('Error');
       EasyLoading.dismiss();
-      print('..............................${ex.message}');
+      debugPrint('..............................${ex.message}');
     } catch (e) {
+      isLoading.value = false;
+
       EasyLoading.showError('Error');
       EasyLoading.dismiss();
-      print('.........................$e');
+      debugPrint('.........................$e');
     }
   }
 
@@ -67,7 +74,7 @@ class LoginController extends GetxController {
     final FirebaseAuth auth = FirebaseAuth.instance;
     try {
       EasyLoading.show();
-      var userCredential = await auth
+      await auth
           .signInWithEmailAndPassword(
               email: emailCtrl.text, password: pasCtrl.text)
           .then((value) {
@@ -78,11 +85,11 @@ class LoginController extends GetxController {
     } on FirebaseException catch (ex) {
       EasyLoading.showError('Error');
       EasyLoading.dismiss();
-      print('......................${ex.message}');
+      debugPrint('......................${ex.message}');
     } catch (e) {
       EasyLoading.showError('Error');
       EasyLoading.dismiss();
-      print('.................$e');
+      debugPrint('.................$e');
     }
   }
 }

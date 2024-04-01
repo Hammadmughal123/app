@@ -8,14 +8,25 @@ class UserModel {
   String? status;
 
   // Constructor
-  UserModel(
-      {this.name,
-      this.email,
-      this.uid,
-      this.image,
-      this.time,
-      this.idToken,
-      this.status});
+  UserModel({
+    this.name,
+    this.email,
+    this.uid,
+    this.image,
+    this.time,
+    this.idToken,
+    this.status,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserModel &&
+          runtimeType == other.runtimeType &&
+          uid == other.uid;
+
+  @override
+  int get hashCode => uid.hashCode;
 
   // Convert UserModel object to Map
   Map<String, dynamic> toMap() {

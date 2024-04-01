@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 
 import '../../../model/chat_room_model.dart';
@@ -17,7 +18,7 @@ class HomeController extends GetxController {
                 (e) => ChatRoomModel.fromJson(
                   e.data(),
                 ),
-              )          
+              )
               .where(
                 (element) => element.chatRoomId!.contains(
                   FirebaseAuth.instance.currentUser!.uid,
@@ -26,4 +27,6 @@ class HomeController extends GetxController {
               .toList(),
         );
   }
+
+  
 }

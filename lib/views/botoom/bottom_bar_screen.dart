@@ -42,7 +42,14 @@ class BottomBarScreen extends StatelessWidget {
             PopupMenuButton(
               color: Colors.white,
               itemBuilder: (context) {
-                return [];
+                return [
+                  PopupMenuItem(
+                    onTap: () {
+                      bottomBarController.userSignOut();
+                    },
+                    child: Text('sign Out'),
+                  )
+                ];
               },
             )
           ],

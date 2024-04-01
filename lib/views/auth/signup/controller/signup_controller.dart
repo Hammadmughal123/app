@@ -14,7 +14,7 @@ class SignupCotroller extends GetxController {
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController passCtrl = TextEditingController();
 
-  Future<void> createUserFromEmailAndPassword() async {
+  Future<void> signupUser() async {
     try {
       EasyLoading.show();
       var user = await auth
